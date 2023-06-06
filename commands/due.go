@@ -15,8 +15,8 @@ const (
 )
 
 func DueOn(c *cli.Context) {
-	taskId := api.FindTaskId(c.Args().First(), true)
-	task := api.Update(taskId, "due_on", toDate(c.Args().First()))
+	taskGid := api.FindTaskGid(c.Args().First(), true)
+	task := api.Update(taskGid, "due_on", toDate(c.Args().First()))
 	fmt.Println("set due on [ " + task.Due_on + " ] :" + task.Name)
 }
 

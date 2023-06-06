@@ -15,8 +15,8 @@ import (
 )
 
 func Comment(c *cli.Context) {
-	taskId := api.FindTaskId(c.Args().First(), false)
-	task, stories := api.Task(taskId, true)
+	taskGid := api.FindTaskGid(c.Args().First(), false)
+	task, stories := api.Task(taskGid, true)
 
 	tmpFile := os.TempDir() + "/asana_comment.txt"
 	f, err := os.Create(tmpFile)
@@ -36,7 +36,7 @@ func Comment(c *cli.Context) {
 
 	postComment := trim(string(txt))
 	if postComment != "" {
-		commented := api.CommentTo(taskId, postComment)
+		commented := api.CommentTo(taskGid, postComment)
 		fmt.Println("Commented on Task: \"" + task.Name + "\"\n")
 		fmt.Println(commented)
 	} else {

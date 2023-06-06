@@ -15,7 +15,7 @@ import (
 )
 
 type Task_t struct {
-	Id              int
+	Gid             string
 	Created_at      string
 	Modified_at     string
 	Name            string
@@ -33,7 +33,7 @@ type Task_t struct {
 }
 
 type Story_t struct {
-	Id         int
+	Gid        string
 	Text       string
 	Type       string
 	Created_at string
@@ -68,7 +68,7 @@ func Tasks(params url.Values, withCompleted bool) []Task_t {
 	return append(tasks_with_due, tasks_without_due...)
 }
 
-func Task(taskId string, verbose bool) (Task_t, []Story_t) {
+func Task(taskGid string, verbose bool) (Task_t, []Story_t) {
 	var (
 		err     error
 		t       map[string]Task_t
@@ -77,13 +77,13 @@ func Task(taskId string, verbose bool) (Task_t, []Story_t) {
 	)
 	task_chan, stories_chan := make(chan []byte), make(chan []byte)
 	go func() {
-		task_chan <- Get("/api/1.0/tasks/"+taskId, nil)
+		task_chan <- Get("/api/1.0/tasks/"+taskGid, nil)
 	}()
 
 	stories = nil
 	if verbose {
 		go func() {
-			stories_chan <- Get("/api/1.0/tasks/"+taskId+"/stories", nil)
+			stories_chan <- Get("/api/1.0/tasks/"+taskGid+"/stories", nil)
 		}()
 		err = json.Unmarshal(<-stories_chan, &ss)
 		utils.Check(err)
@@ -95,7 +95,7 @@ func Task(taskId string, verbose bool) (Task_t, []Story_t) {
 	return t["data"], stories
 }
 
-func FindTaskId(index string, autoFirst bool) string {
+func FindTaskGid(index string, autoFirst bool) string {
 	if index == "" {
 		if autoFirst == false {
 			log.Fatal("fatal: Task index is required.")
@@ -104,24 +104,24 @@ func FindTaskId(index string, autoFirst bool) string {
 		}
 	}
 
-	var id string
+	var gid string
 	txt, err := ioutil.ReadFile(utils.CacheFile())
 
 	if err != nil { // cache file not exist
 		ind, parseErr := strconv.Atoi(index)
 		utils.Check(parseErr)
 		task := Tasks(url.Values{}, false)[ind]
-		id = strconv.Itoa(task.Id)
+		gid = task.Gid
 	} else {
 		lines := regexp.MustCompile("\n").Split(string(txt), -1)
 		for i, line := range lines {
 			if index == strconv.Itoa(i) {
 				line = regexp.MustCompile("^[0-9]*:").ReplaceAllString(line, "") // remove index
-				id = regexp.MustCompile("^[0-9]*").FindString(line)
+				gid = regexp.MustCompile("^[0-9]*").FindString(line)
 			}
 		}
 	}
-	return id
+	return gid
 }
 
 func (s Story_t) String() string {
@@ -136,9 +136,9 @@ type Commented_t struct {
 	Text string `json:"text"` // Define only required field.
 }
 
-func CommentTo(taskId string, comment string) string {
+func CommentTo(taskGid string, comment string) string {
 
-	respBody := Post("/tasks/"+taskId+"/stories", `{"data":{"text":"`+comment+`"}}`)
+	respBody := Post("/tasks/"+taskGid+"/stories", `{"data":{"text":"`+comment+`"}}`)
 
 	var output map[string]Commented_t
 	err := json.Unmarshal(respBody, &output)
@@ -147,8 +147,8 @@ func CommentTo(taskId string, comment string) string {
 	return output["data"].Text
 }
 
-func Update(taskId string, key string, value string) Task_t {
-	respBody := Put("/tasks/"+taskId, `{"data":{"`+key+`":"`+value+`"}}`)
+func Update(taskGid string, key string, value string) Task_t {
+	respBody := Put("/tasks/"+taskGid, `{"data":{"`+key+`":"`+value+`"}}`)
 
 	var output map[string]Task_t
 	err := json.Unmarshal(respBody, &output)

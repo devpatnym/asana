@@ -7,7 +7,7 @@ import (
 )
 
 type Me_t struct {
-	Id         int
+	Gid        string
 	Name       string
 	Email      string
 	Workspaces []Base
