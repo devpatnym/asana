@@ -43,6 +43,7 @@ type Story_t struct {
 type ProjectSection_t struct {
 	Gid        string
 	Name       string
+	Tasks	   []Task_t
 }
 
 type ByDue []Task_t
@@ -51,15 +52,14 @@ func (a ByDue) Len() int           { return len(a) }
 func (a ByDue) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByDue) Less(i, j int) bool { return a[i].Due_on < a[j].Due_on }
 
-func MyTasks() map[string][]Task_t {
-	sections_and_tasks := make(map[string][]Task_t)
+func MyTasks() []ProjectSection_t {
 	sections := GetMyUserTaskListSections()
-	for _, section := range sections {
+	for i, section := range sections {
 		if section.Name != "Done" {
-			sections_and_tasks[section.Name] = make([]Task_t, 0)
+			sections[i].Tasks = TasksBySectionGid(url.Values{}, false, section.Gid)
 		}
 	}
-	return sections_and_tasks
+	return sections
 }
 
 func GetMyUserTaskListSections() []ProjectSection_t {
@@ -88,11 +88,25 @@ func GetMyUserTaskListGid() string {
 }
 
 func Tasks(params url.Values, withCompleted bool) []Task_t {
-	params.Add("workspace", strconv.Itoa(config.Load().Workspace))
-	params.Add("assignee", "me")
+	return TasksImpl(params, withCompleted, "")
+}
+
+func TasksBySectionGid(params url.Values, withCompleted bool, sectionGid string) []Task_t {
+	return TasksImpl(params, withCompleted, sectionGid)
+}
+
+func TasksImpl(params url.Values, withCompleted bool, sectionGid string) []Task_t {
+	url := "/api/1.0/tasks"
+	if sectionGid == "" {
+		params.Add("workspace", strconv.Itoa(config.Load().Workspace))
+		params.Add("assignee", "me")
+	} else {
+		url = "/api/1.0/sections/"+sectionGid+"/tasks"
+		params.Add("completed_since", "now")
+	}
 	params.Add("opt_fields", "name,completed,due_on")
 	var tasks map[string][]Task_t
-	err := json.Unmarshal(Get("/api/1.0/tasks", params), &tasks)
+	err := json.Unmarshal(Get(url, params), &tasks)
 	utils.Check(err)
 	var tasks_without_due, tasks_with_due []Task_t
 	for _, t := range tasks["data"] {

@@ -20,10 +20,18 @@ func MyTasks(c *cli.Context) {
 
 func MyTasksFromAPI() {
  	sections_and_tasks := api.MyTasks()
-	for section_name, tasks := range sections_and_tasks {
-		fmt.Println(section_name)
+	for j, section_and_tasks := range sections_and_tasks {
+		if section_and_tasks.Name == "Done" {
+			continue
+		}
+		fmt.Println(section_and_tasks.Name)
+		tasks := section_and_tasks.Tasks
+		if (len(tasks) == 0) {
+			fmt.Println(" -  - none")
+		}
 		for i, t := range tasks {
-			fmt.Printf("%2d [ %10s ] %s\n", i, t.Due_on, t.Name)
+			fmt.Printf("%2d %2d %.80s %s \n", j, i, t.Name, t.Due_on)
+			//fmt.Printf("%2d [ %10s ] %s\n", i, t.Due_on, t.Name)
 		}
 	}
 }

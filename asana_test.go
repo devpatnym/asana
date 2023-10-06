@@ -6,7 +6,7 @@ import (
 
 func TestMain(t *testing.T) {
 	expects := []string{"config", "workspaces", "tasks", "task",
-		"comment", "done", "due", "browse", "my_tasks"}
+		"comment", "done", "due", "browse", "my_tasks", "my_task", "my_tasks_gid"}
 	cmds := defs()
 	if len(cmds) != len(expects) {
 		t.Error("commands mismatch")
