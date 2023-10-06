@@ -12,6 +12,7 @@ import (
 type Conf struct {
 	Personal_access_token string
 	Workspace int
+	User_task_list_gid string
 }
 
 func Load() Conf {

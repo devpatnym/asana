@@ -40,11 +40,52 @@ type Story_t struct {
 	Created_by Base
 }
 
+type ProjectSection_t struct {
+	Gid        string
+	Name       string
+}
+
 type ByDue []Task_t
 
 func (a ByDue) Len() int           { return len(a) }
 func (a ByDue) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByDue) Less(i, j int) bool { return a[i].Due_on < a[j].Due_on }
+
+func MyTasks() map[string][]Task_t {
+	sections_and_tasks := make(map[string][]Task_t)
+	sections := GetMyUserTaskListSections()
+	for _, section := range sections {
+		if section.Name != "Done" {
+			sections_and_tasks[section.Name] = make([]Task_t, 0)
+		}
+	}
+	return sections_and_tasks
+}
+
+func GetMyUserTaskListSections() []ProjectSection_t {
+	var v map[string][]ProjectSection_t
+	user_task_list_gid := config.Load().User_task_list_gid
+	if user_task_list_gid == "" {
+		fmt.Println("Need UserTaskListGid, try mtgid")
+		return []ProjectSection_t{}
+	}
+	params := url.Values{}
+	params.Add("workspace", strconv.Itoa(config.Load().Workspace))
+	url := "/api/1.0/projects/"+user_task_list_gid+"/sections"
+	err := json.Unmarshal(Get(url, params), &v)
+	utils.Check(err)
+	return v["data"]
+}
+
+func GetMyUserTaskListGid() string {
+	var v map[string]interface{}
+	params := url.Values{}
+	params.Add("workspace", strconv.Itoa(config.Load().Workspace))
+	url := "/api/1.0/users/me/user_task_list"
+	err := json.Unmarshal(Get(url, params), &v)
+	utils.Check(err)
+	return v["data"].(map[string]interface{})["gid"].(string)
+}
 
 func Tasks(params url.Values, withCompleted bool) []Task_t {
 	params.Add("workspace", strconv.Itoa(config.Load().Workspace))

@@ -52,6 +52,24 @@ func defs() []*cli.Command {
 			},
 		},
 		{
+			Name:    "my_tasks",
+			Aliases: []string{"mt"},
+			Usage:   "get my tasks",
+			Action: func(c *cli.Context) error {
+				commands.MyTasks(c)
+				return nil
+			},
+		},
+		{
+			Name:    "my_tasks_gid",
+			Aliases: []string{"mtgid"},
+			Usage:   "get my tasks gid for config",
+			Action: func(c *cli.Context) error {
+				commands.MyTasksGid(c)
+				return nil
+			},
+		},
+		{
 			Name:    "task",
 			Aliases: []string{"t"},
 			Usage:   "get a task",
