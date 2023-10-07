@@ -14,6 +14,10 @@ import (
 	"github.com/thash/asana/utils"
 )
 
+type Membership_t struct {
+	Section		ProjectSection_t
+}
+
 type Task_t struct {
 	Gid             string
 	Created_at      string
@@ -30,6 +34,7 @@ type Task_t struct {
 	Parent          Base
 	Projects        []Base
 	Folloers        []Base
+	Memberships	[]Membership_t
 }
 
 type Story_t struct {
@@ -98,13 +103,18 @@ func TasksBySectionGid(params url.Values, withCompleted bool, sectionGid string)
 func TasksImpl(params url.Values, withCompleted bool, sectionGid string) []Task_t {
 	url := "/api/1.0/tasks"
 	if sectionGid == "" {
-		params.Add("workspace", strconv.Itoa(config.Load().Workspace))
-		params.Add("assignee", "me")
+		user_task_list_gid := config.Load().User_task_list_gid
+		if user_task_list_gid != "" {
+			params.Add("user_task_list", user_task_list_gid);
+		} else {
+			params.Add("workspace", strconv.Itoa(config.Load().Workspace))
+			params.Add("assignee", "me")
+		}
 	} else {
 		url = "/api/1.0/sections/"+sectionGid+"/tasks"
-		params.Add("completed_since", "now")
 	}
-	params.Add("opt_fields", "name,completed,due_on")
+	params.Add("completed_since", "now")
+	params.Add("opt_fields", "name,completed,due_on,memberships.section.name")
 	var tasks map[string][]Task_t
 	err := json.Unmarshal(Get(url, params), &tasks)
 	utils.Check(err)

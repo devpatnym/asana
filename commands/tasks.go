@@ -47,8 +47,25 @@ func fromAPI(saveCache bool) {
 		cache(tasks)
 	}
 	for i, t := range tasks {
-		fmt.Printf("%2d [ %10s ] %s\n", i, t.Due_on, t.Name)
+		memberships := membershipsToSectionNames(t.Memberships)
+		printfFromFields(i, t.Name, t.Due_on, memberships)
 	}
+}
+
+func membershipsToSectionNames(memberships []api.Membership_t) string {
+	outstr := ""
+	for _, m := range memberships {
+		outstr = outstr + m.Section.Name
+	}
+	return outstr
+}
+
+func printfFromFields(index int, name, due_on, memberships string) {
+		if (regexp.MustCompile("Deployed|release").MatchString(memberships)) {
+			fmt.Println("-")
+		} else {
+			fmt.Printf("%2d %s [%s] {%s}\n", index, name, due_on, memberships)
+		}
 }
 
 func cache(tasks []api.Task_t) {
@@ -57,6 +74,7 @@ func cache(tasks []api.Task_t) {
 	for i, t := range tasks {
 		f.WriteString(strconv.Itoa(i) + ":")
 		f.WriteString(t.Gid + ":")
+		f.WriteString(membershipsToSectionNames(t.Memberships) + ":")
 		f.WriteString(t.Due_on + ":")
 		f.WriteString(t.Name + "\n")
 	}
@@ -66,9 +84,12 @@ func format(line string) {
 	dateRegexp := "[0-9]{4}-[0-9]{2}-[0-9]{2}"
 
 	index := regexp.MustCompile("^[0-9]*").FindString(line)
+	index2, _ := strconv.Atoi(index)
 	line = regexp.MustCompile("^[0-9]*:").ReplaceAllString(line, "") // remove index
 	line = regexp.MustCompile("^[0-9]*:").ReplaceAllString(line, "") // remove task_id
+	mems := regexp.MustCompile("^[^:]+").FindString(line)
+	line = regexp.MustCompile("^[^:]+:").ReplaceAllString(line, "") // remove memberships
 	date := regexp.MustCompile("^" + dateRegexp).FindString(line)
 	line = regexp.MustCompile("^("+dateRegexp+")?:").ReplaceAllString(line, "") // remove date
-	fmt.Printf("%2s [ %10s ] %s\n", index, date, line)
+	printfFromFields(index2, line, date, mems)
 }
